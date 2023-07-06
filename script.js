@@ -157,18 +157,16 @@ searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
 
     if (searchTerm === '') {
-        // Si el campo de búsqueda está vacío, cargar los pokémones de la página actual
         offset = 1;
         removeChildNodes(pokemonContainer);
         fetchPokemons(offset, limit);
     } else {
-        // Realizar una nueva búsqueda en toda la API
         spinner.style.display = 'block';
         removeChildNodes(pokemonContainer);
         filterAndShowPokemons(searchTerm);
     }
 });
-
+/* Buscar en toooooda la API  */
 function fetchAllPokemons() {
     fetch('https://pokeapi.co/api/v2/pokemon?limit=1000')
         .then(response => response.json())
@@ -181,10 +179,17 @@ function fetchAllPokemons() {
 }
 
 function filterAndShowPokemons(searchTerm) {
-    const filteredPokemons = allPokemons.filter(pokemon => pokemon.name.includes(searchTerm));
-
+    const filteredPokemons = allPokemons.filter(pokemon => {
+        return (
+            pokemon.name.includes(searchTerm) ||
+            getPokemonIdFromUrl(pokemon.url)
+            .toString()
+            .padStart(3, '0')
+            .includes(searchTerm)
+        );
+    });
+    /* Por si no encuentra coincidencias */
     if (filteredPokemons.length === 0) {
-        // Mostrar mensaje de no coincidencias
         const message = document.createElement('p');
         message.textContent = 'No se encontraron resultados.';
         message.classList.add('no-results-message');
@@ -193,19 +198,19 @@ function filterAndShowPokemons(searchTerm) {
     } else {
         const slicedPokemons = filteredPokemons.slice(0, limit);
         const promises = slicedPokemons.map(pokemon => {
-            const pokemonId = getPokemonIdFromUrl(pokemon.url);
-            return fetchPokemon(pokemonId);
+        const pokemonId = getPokemonIdFromUrl(pokemon.url);
+        return fetchPokemon(pokemonId);
         });
-
+    
         spinner.style.display = 'block';
         Promise.all(promises)
-            .then(() => {
-                spinner.style.display = 'none';
-            })
-            .catch(error => {
-                console.log('Error en la búsqueda:', error);
-                spinner.style.display = 'none';
-            });
+        .then(() => {
+            spinner.style.display = 'none';
+        })
+        .catch(error => {
+            console.log('Error en la búsqueda:', error);
+            spinner.style.display = 'none';
+        });
     }
 }
 
